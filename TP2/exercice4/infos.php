@@ -4,6 +4,9 @@ require_once __DIR__ . '/../config.php';
 $title = "Exercice 4 - Informations sur un prix";
 require "debut_code_html.php";
 
+// Chaque page commence par un titre principal (h1) : les lecteurs d'écran s'en servent pour se repérer
+echo '<h1>' . $title . '</h1>';
+
 if (!isset($_GET['id'])) {
     echo '<p>Aucun identifiant</p>';
 } else {

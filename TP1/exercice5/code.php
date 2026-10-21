@@ -2,6 +2,9 @@
 $title = "Exercice 5";
 require "debut_code_html.php";
 
+// Chaque page commence par un titre principal (h1) : les lecteurs d'écran s'en servent pour se repérer
+echo '<h1>' . $title . '</h1>';
+
 $personnes = [
   'mdupond' => ['Prénom' => 'Martin', 'Nom' => 'Dupond', 'Age' => 25, 'Ville' => 'Paris'],
   'jm'      => ['Prénom' => 'Jean'  , 'Nom' => 'Martin', 'Age' => 20, 'Ville' => 'Villetaneuse'],

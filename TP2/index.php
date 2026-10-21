@@ -43,6 +43,7 @@ uksort($exercises, 'strnatcmp');
 <html lang="fr">
 <head>
 <meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>TP2 — Les prix Nobel</title>
 <style>
     body { font-family: "Segoe UI", Roboto, sans-serif; max-width: 50rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
@@ -52,6 +53,7 @@ uksort($exercises, 'strnatcmp');
 </style>
 </head>
 <body>
+<main>
 
 <h1>TP2 — Les prix Nobel</h1>
 
@@ -79,5 +81,6 @@ uksort($exercises, 'strnatcmp');
     </ul>
 <?php } ?>
 
+</main>
 </body>
 </html>

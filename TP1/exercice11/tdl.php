@@ -34,6 +34,8 @@ require "debut_code_html.php";
 
 <h1>Ma TODO liste</h1>
 
+<p>Cliquer sur une tâche pour la supprimer.</p>
+
 <?php echo $_SESSION['tdl']->get_html(); ?>
 
 <form action="tdl.php" method="get">

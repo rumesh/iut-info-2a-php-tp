@@ -33,6 +33,9 @@ if (isset($_POST['reinitialiser'])) {
 $title = "Exercice 10";
 require "debut_code_html.php";
 
+// Chaque page commence par un titre principal (h1) : les lecteurs d'écran s'en servent pour se repérer
+echo '<h1>' . $title . '</h1>';
+
 if ($message !== '') {
     echo '<p>' . $message . '</p>';
 }

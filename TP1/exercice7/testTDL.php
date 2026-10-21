@@ -4,6 +4,9 @@ require_once "TODOList.php";
 $title = "Exercice 7 - Test TODOList";
 require "debut_code_html.php";
 
+// Chaque page commence par un titre principal (h1) : les lecteurs d'écran s'en servent pour se repérer
+echo '<h1>' . $title . '</h1>';
+
 $tdl = new TODOList();
 $tdl->add_to_do("Faire les courses");
 $tdl->add_to_do("Réviser le PHP");

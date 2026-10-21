@@ -3,6 +3,9 @@
 $title = "Exercice 3";
 require "debut_code_html.php";
 
+// Chaque page commence par un titre principal (h1) : les lecteurs d'écran s'en servent pour se repérer
+echo '<h1>' . $title . '</h1>';
+
 
 $chats = 3;
 $chiens = 2;

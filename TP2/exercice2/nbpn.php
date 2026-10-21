@@ -4,6 +4,9 @@ require_once __DIR__ . '/../config.php';
 $title = "Exercice 2 - Nombre de prix Nobel";
 require "debut_code_html.php";
 
+// Chaque page commence par un titre principal (h1) : les lecteurs d'écran s'en servent pour se repérer
+echo '<h1>' . $title . '</h1>';
+
 // Connexion à la base : en cas de problème, PDO lève une exception
 $bd = new PDO(DB_DSN, DB_USER, DB_PASSWORD);
 $bd->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

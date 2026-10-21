@@ -32,7 +32,8 @@ class TODOList {
         $html = '<ul>';
         foreach ($this->to_dos as $indice => $tache) {
             $texte = htmlspecialchars($tache);
-            $html .= '<li><a href="tdl.php?rm=' . $indice . '">' . $texte . '</a></li>';
+            // aria-label : un lecteur d'écran annonce "Supprimer : <tâche>", et pas seulement le nom de la tâche
+            $html .= '<li><a href="tdl.php?rm=' . $indice . '" aria-label="Supprimer : ' . $texte . '">' . $texte . '</a></li>';
         }
         $html .= '</ul>';
         return $html;

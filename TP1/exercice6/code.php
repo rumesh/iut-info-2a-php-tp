@@ -2,6 +2,9 @@
 $title = "Exercice 6";
 require "debut_code_html.php";
 
+// Chaque page commence par un titre principal (h1) : les lecteurs d'écran s'en servent pour se repérer
+echo '<h1>' . $title . '</h1>';
+
 $tabMagazines = [
   'le monde'              => ['frequence' => 'quotidien', 'type' => 'actualité', 'prix' => 220],
   'le point'              => ['frequence' => 'hebdo'    , 'type' => 'actualité', 'prix' => 80 ],

@@ -30,12 +30,14 @@ sont remplacés ci-dessous par une seule instruction echo utilisant la
 concaténation (opérateur .).
 -->
 <!doctype html>
-<html>
+<html lang="fr">
 <head>
 <title> <?php echo 'Premiers pas en PHP'; ?> </title>
 <meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 </head>
 <body>
+<main>
 <h1> Mes premiers pas en PHP </h1>
 <?php $tps = 2; echo '<p> Je débute depuis ' . $tps . ' heures... </p>'; ?>
 <p> Mais cela a l'air intéressant <?php echo '!' ?> </p>
@@ -46,5 +48,6 @@ concaténation (opérateur .).
 <p> Encore quelques paragraphes </p>
 <?php echo '<p> Avant dernier paragraphe </p>'; ?>
 <p> Voilà, c'est terminé! </p>
+</main>
 </body>
 </html>

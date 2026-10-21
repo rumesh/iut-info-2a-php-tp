@@ -2,6 +2,9 @@
 $title = "Exercice 9";
 require "debut_code_html.php";
 
+// Chaque page commence par un titre principal (h1) : les lecteurs d'écran s'en servent pour se repérer
+echo '<h1>' . $title . '</h1>';
+
 // Question 1 & 2 : le script ne doit générer aucune erreur, avec ou sans paramètre
 if (isset($_GET['nombre'])) {
     $nombre = $_GET['nombre'];

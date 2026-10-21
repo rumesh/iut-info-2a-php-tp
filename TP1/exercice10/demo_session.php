@@ -54,7 +54,8 @@ require "debut_code_html.php";
 
 <p>
     <code>session_id()</code> =
-    <strong><?php echo htmlspecialchars(session_id()); ?></strong>
+    <?php // overflow-wrap : le long numéro peut passer à la ligne sur un petit écran ?>
+    <strong style="overflow-wrap: anywhere"><?php echo htmlspecialchars(session_id()); ?></strong>
 </p>
 
 <h2>3. Le ticket, côté navigateur</h2>
@@ -64,7 +65,7 @@ require "debut_code_html.php";
     <p>
         Le navigateur vient de me renvoyer le cookie<br />
         <code>PHPSESSID</code> =
-        <strong><?php echo htmlspecialchars($_COOKIE['PHPSESSID']); ?></strong>
+        <strong style="overflow-wrap: anywhere"><?php echo htmlspecialchars($_COOKIE['PHPSESSID']); ?></strong>
     </p>
     <p><em>C'est le même numéro qu'au point 2 : le ticket a servi à ouvrir le
     bon casier.</em></p>
@@ -82,7 +83,8 @@ require "debut_code_html.php";
 
 <h2>4. Tout le contenu de la session</h2>
 
-<pre><?php print_r($_SESSION); ?></pre>
+<?php // pre-wrap : les longues lignes passent à la ligne au lieu de faire déborder la page ?>
+<pre style="white-space: pre-wrap; overflow-wrap: anywhere"><?php print_r($_SESSION); ?></pre>
 
 <hr />
 

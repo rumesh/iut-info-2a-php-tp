@@ -298,8 +298,16 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>TP PHP — Sommaire des exercices</title>
+<title><?php
+    // Le titre de l'onglet dit ce que l'on regarde : c'est aussi la première
+    // chose qu'un lecteur d'écran annonce quand la page se charge.
+    if ($selectedPage !== null) {
+        echo escape($selectedExercise['folder'] . '/' . $selectedPage) . ' — ';
+    }
+?>TP PHP — Sommaire des exercices</title>
 <style>
+    /* Accessibilité : toutes les couleurs de texte ci-dessous ont un contraste
+       d'au moins 4.5:1 avec leur fond (niveau AA des règles WCAG). */
     :root {
         --bg: #1e1e2e;
         --panel: #252538;
@@ -309,65 +317,113 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
         --text-muted: #9a9ac0;
         --accent: #6c8cff;
         --accent-hover: #86a1ff;
+        --accent-strong: #3b5bdb;  /* fond des liens actifs : le texte blanc y reste lisible */
+        --focus: #ffd166;          /* contour de l'élément qui a le focus clavier */
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     body {
         margin: 0;
+        display: flex;
+        flex-direction: column;
         font-family: "Segoe UI", Roboto, sans-serif;
         background: var(--bg);
         color: var(--text);
         line-height: 1.5;
     }
 
+    /* --- Navigation au clavier --- */
+    /* L'élément qui a le focus doit toujours être bien visible. */
+    a:focus-visible,
+    summary:focus-visible,
+    [tabindex]:focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 2px;
+    }
+    /* Lien d'évitement : caché hors de l'écran, il apparaît dès qu'on y arrive
+       avec Tab, et permet de sauter directement au contenu. */
+    .skip-link {
+        position: absolute;
+        left: 1rem;
+        top: -10rem;
+        z-index: 10;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        background: var(--accent-strong);
+        color: #fff;
+    }
+    .skip-link:focus { top: 0.5rem; }
+    /* Texte lu par les lecteurs d'écran mais invisible à l'écran. */
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
     /* --- En-tête --- */
     header {
         display: flex;
+        flex-wrap: wrap;       /* le texte agrandi passe à la ligne au lieu de déborder */
         align-items: baseline;
-        gap: 1rem;
+        column-gap: 1rem;
         padding: 0.7rem 1.25rem;
         background: var(--panel);
         border-bottom: 1px solid var(--border);
     }
     header h1 { font-size: 1.05rem; margin: 0; font-weight: 600; }
-    header .subtitle { font-size: 0.8rem; color: var(--text-muted); }
+    header .subtitle { margin: 0; font-size: 0.875rem; color: var(--text-muted); }
 
-    /* --- Les trois colonnes --- */
+    /* --- Les trois colonnes : la liste (nav), puis le résultat et le code (main) --- */
     .layout {
         display: grid;
-        grid-template-columns: 230px 1fr 1fr;
-        height: calc(100% - 49px);
+        grid-template-columns: 250px 1fr;
+        grid-template-rows: minmax(0, 1fr);
+        flex: 1;               /* prend toute la hauteur sous l'en-tête */
+        min-height: 0;
+    }
+    main {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: minmax(0, 1fr);
+        min-width: 0;
     }
     .column {
         display: flex;
         flex-direction: column;
         min-width: 0;          /* sans cela, le code trop large déforme la grille */
+        min-height: 0;
         border-left: 1px solid var(--border);
     }
-    .column:first-child { border-left: none; }
+    .layout > .column:first-child { border-left: none; }
     .column-title {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 0.5rem;
         padding: 0.4rem 1rem;
-        font-size: 0.72rem;
+        font-size: 0.8rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         color: var(--text-muted);
         background: var(--panel);
         border-bottom: 1px solid var(--border);
     }
+    .column-title h2 { margin: 0; font-size: inherit; font-weight: 600; }
     .column-body { flex: 1; overflow: auto; }
 
     /* --- Colonne 1 : la liste des exercices --- */
     .exercise { padding: 0.55rem 1rem; border-bottom: 1px solid var(--border); }
-    .exercise h2 {
-        font-size: 0.8rem;
+    .exercise h3 {
+        font-size: 0.85rem;
         margin: 0 0 0.35rem;
         color: var(--text-muted);
         font-weight: 600;
     }
+    .exercise ul,
+    .tabs ul { list-style: none; margin: 0; padding: 0; }
     .exercise a {
         display: block;
         padding: 0.3rem 0.5rem;
@@ -376,11 +432,13 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
         color: var(--text);
         text-decoration: none;
         font-family: Consolas, monospace;
-        font-size: 0.8rem;
+        font-size: 0.875rem;
     }
     .exercise a:hover { background: var(--border); }
-    .exercise a.active { background: var(--accent); color: #fff; }
-    .exercise .empty { font-size: 0.75rem; color: var(--text-muted); font-style: italic; }
+    /* Le lien actif est repéré par aria-current (annoncé "page actuelle" par
+       les lecteurs d'écran) : le style s'appuie sur ce même attribut. */
+    .exercise a[aria-current] { background: var(--accent-strong); color: #fff; }
+    .exercise .empty { font-size: 0.85rem; color: var(--text-muted); font-style: italic; }
     .tp-title {
         padding: 0.45rem 1rem;
         font-size: 0.85rem;
@@ -395,6 +453,7 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
     .tp-title::-webkit-details-marker { display: none; }
     .tp-title::before {                /* ...par une flèche qui tourne */
         content: "▸";
+        content: "▸" / "";             /* décorative : ignorée par les lecteurs d'écran */
         display: inline-block;
         width: 1em;
         transition: transform 0.15s;
@@ -403,34 +462,39 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
     .tp-title:hover { color: var(--accent-hover); }
 
     /* --- Colonne 2 : le résultat --- */
-    iframe { width: 100%; height: 100%; border: none; background: #fff; }
+    /* display: block retire le petit espace laissé sous une iframe "en ligne",
+       qui rendait la colonne inutilement défilante. */
+    iframe { display: block; width: 100%; height: 100%; border: none; background: #fff; }
 
     /* --- Colonne 3 : le code source --- */
     .tabs {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.3rem;
         padding: 0.45rem 1rem;
         background: var(--panel);
         border-bottom: 1px solid var(--border);
     }
+    .tabs ul { display: flex; flex-wrap: wrap; gap: 0.3rem; }
     .tabs a {
-        padding: 0.22rem 0.55rem;
+        display: block;
+        padding: 0.25rem 0.55rem;
         border-radius: 5px;
         border: 1px solid var(--border);
         color: var(--text-muted);
         text-decoration: none;
         font-family: Consolas, monospace;
-        font-size: 0.75rem;
+        font-size: 0.85rem;
     }
     .tabs a:hover { color: var(--text); background: var(--border); }
-    .tabs a.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .tabs a[aria-current] { background: var(--accent-strong); border-color: var(--accent-strong); color: #fff; }
     .source { background: var(--code-bg); padding: 0.75rem 1rem; }
+    /* Le code peut défiler : la zone reçoit donc le focus (tabindex="0") pour
+       qu'on puisse la faire défiler au clavier, avec les flèches. Le contour
+       est placé à l'intérieur pour ne pas être coupé par les bords. */
+    .source:focus-visible { outline-offset: -3px; }
     /* highlight_file() produit lui-même un <pre> : on ne fait que le styler. */
     .source pre {
         margin: 0;
         font-family: "Fira Code", Consolas, monospace;
-        font-size: 0.8rem;
+        font-size: 0.875rem;
         line-height: 1.55;
     }
 
@@ -438,17 +502,37 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
     .placeholder {
         padding: 2rem 1.5rem;
         color: var(--text-muted);
-        font-size: 0.85rem;
+        font-size: 0.9rem;
     }
-    .open-link { color: var(--accent); text-decoration: none; font-size: 0.72rem; }
-    .open-link:hover { color: var(--accent-hover); }
+    .open-link {
+        display: inline-block;
+        padding: 0.2rem 0;
+        color: var(--accent);
+        text-decoration: none;
+        font-size: 0.8rem;
+    }
+    .open-link:hover { color: var(--accent-hover); text-decoration: underline; }
 
-    /* --- Écrans étroits : on empile les trois zones --- */
+    /* --- Écrans étroits (ou page zoomée) : on empile les trois zones --- */
     @media (max-width: 950px) {
-        .layout { grid-template-columns: 1fr; height: auto; }
+        html, body { height: auto; }
+        .layout, main { grid-template-columns: 1fr; grid-template-rows: none; }
+        .layout { flex: none; }
         .column { border-left: none; border-top: 1px solid var(--border); }
         .column-body { max-height: 70vh; }
         iframe { height: 70vh; }
+    }
+
+    /* --- Préférences du système de l'utilisateur --- */
+    /* "Réduire les animations" : la flèche des TP ne tourne plus. */
+    @media (prefers-reduced-motion: reduce) {
+        .tp-title::before { transition: none; }
+    }
+    /* Mode "contraste élevé" de Windows : le navigateur impose ses propres
+       couleurs et supprime les fonds, on encadre donc le lien actif. */
+    @media (forced-colors: active) {
+        .exercise a[aria-current],
+        .tabs a[aria-current] { outline: 2px solid Highlight; }
     }
 </style>
 </head>
@@ -460,19 +544,26 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
  * ===================================================================== */
 ?>
 
+<?php
+// Accessibilité : la page est découpée en "régions" (<header>, <nav>, <main>,
+// <section>) et en titres (h1, h2, h3). Les lecteurs d'écran permettent de
+// sauter directement de l'une à l'autre, comme on parcourt la page des yeux.
+?>
+<a class="skip-link" href="#main">Aller au contenu principal</a>
+
 <header>
     <h1>TP PHP — Sommaire des exercices</h1>
-    <span class="subtitle">
+    <p class="subtitle">
         <?php echo $exerciseCount; ?> exercice(s) détecté(s) automatiquement
         dans <?php echo $tpCount; ?> TP
-    </span>
+    </p>
 </header>
 
 <div class="layout">
 
     <?php /* ---------- Colonne 1 : la liste des exercices ---------- */ ?>
-    <div class="column">
-        <div class="column-title">Exercices</div>
+    <nav class="column" aria-labelledby="exercises-title">
+        <div class="column-title"><h2 id="exercises-title">Exercices</h2></div>
         <div class="column-body">
 
             <?php if ($exerciseCount === 0) { ?>
@@ -507,29 +598,45 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
 
                 <div class="exercise">
 
-                    <h2>Exercice <?php echo $exercise['number']; ?></h2>
+                    <h3>Exercice <?php echo $exercise['number']; ?></h3>
 
                     <?php if (count($exercise['pages']) === 0) { ?>
 
                         <p class="empty">Aucune page à ouvrir.</p>
 
-                    <?php } ?>
+                    <?php } else { ?>
 
-                    <?php foreach ($exercise['pages'] as $page) { ?>
-                        <?php
-                        // Le lien est "actif" si c'est exactement ce que l'on
-                        // est en train de regarder.
-                        $isActive = $selectedExercise !== null
-                            && $selectedExercise['folder'] === $exercise['folder']
-                            && $selectedPage === $page;
-                        ?>
-                        <a class="<?php echo $isActive ? 'active' : ''; ?>"
-                           href="<?php echo buildUrl(array(
-                               'exercise' => $exercise['folder'],
-                               'page'     => $page,
-                           )); ?>">
-                            <?php echo escape($page); ?>
-                        </a>
+                        <ul>
+                        <?php foreach ($exercise['pages'] as $page) { ?>
+                            <?php
+                            // Le lien est "actif" si c'est exactement ce que l'on
+                            // est en train de regarder.
+                            $isActive = $selectedExercise !== null
+                                && $selectedExercise['folder'] === $exercise['folder']
+                                && $selectedPage === $page;
+
+                            // Le "#result" à la fin de l'adresse : après le
+                            // chargement, la navigation au clavier reprend
+                            // directement au résultat, sans repasser par la liste.
+                            ?>
+                            <li>
+                                <a <?php echo $isActive ? 'aria-current="page"' : ''; ?>
+                                   href="<?php echo buildUrl(array(
+                                       'exercise' => $exercise['folder'],
+                                       'page'     => $page,
+                                   )); ?>#result">
+                                    <?php
+                                    // Plusieurs exercices ont une page "code.php" : le
+                                    // texte caché précise laquelle, pour les lecteurs
+                                    // d'écran qui listent les liens hors de leur contexte.
+                                    ?>
+                                    <span class="visually-hidden"><?php echo escape($exercise['tp']); ?>, exercice <?php echo $exercise['number']; ?> :</span>
+                                    <?php echo escape($page); ?>
+                                </a>
+                            </li>
+                        <?php } ?>
+                        </ul>
+
                     <?php } ?>
 
                 </div>
@@ -541,16 +648,25 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
             <?php } ?>
 
         </div>
-    </div>
+    </nav>
+
+    <main id="main">
 
     <?php /* ---------- Colonne 2 : le résultat dans une iframe ---------- */ ?>
-    <div class="column">
+    <section class="column" id="result" aria-labelledby="result-title">
         <div class="column-title">
-            <span>Résultat</span>
+            <h2 id="result-title">Résultat</h2>
             <?php if ($selectedPage !== null) { ?>
-                <a class="open-link" target="_blank"
+                <?php
+                // On prévient que le lien ouvre un nouvel onglet : sinon, un
+                // utilisateur de lecteur d'écran ne comprend pas pourquoi le
+                // bouton "Précédent" du navigateur ne fonctionne plus.
+                // La flèche est décorative (aria-hidden) : elle n'est pas lue.
+                ?>
+                <a class="open-link" target="_blank" rel="noopener"
                    href="<?php echo escape($selectedExercise['folder'] . '/' . $selectedPage); ?>">
-                    ouvrir dans un onglet ↗
+                    ouvrir dans un onglet<span class="visually-hidden"> (nouvel onglet)</span>
+                    <span aria-hidden="true">↗</span>
                 </a>
             <?php } ?>
         </div>
@@ -569,19 +685,20 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
                 // L'iframe demande la page au serveur exactement comme si on
                 // l'ouvrait dans un onglet : le PHP y est donc bien exécuté.
                 ?>
+                <?php // Le titre de l'iframe est ce que les lecteurs d'écran annoncent en y entrant. ?>
                 <iframe
-                    title="Résultat de <?php echo escape($selectedPage); ?>"
+                    title="Résultat de <?php echo escape($selectedExercise['folder'] . '/' . $selectedPage); ?>"
                     src="<?php echo escape($selectedExercise['folder'] . '/' . $selectedPage); ?>"></iframe>
 
             <?php } ?>
 
         </div>
-    </div>
+    </section>
 
     <?php /* ---------- Colonne 3 : le code source coloré ---------- */ ?>
-    <div class="column">
+    <section class="column" aria-labelledby="source-title">
         <div class="column-title">
-            <span>Code source</span>
+            <h2 id="source-title">Code source</h2>
             <?php if ($selectedFile !== null) { ?>
                 <span><?php echo escape($selectedExercise['folder'] . '/' . $selectedFile); ?></span>
             <?php } ?>
@@ -589,27 +706,37 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
 
         <?php if ($selectedExercise !== null) { ?>
             <?php // Un onglet par fichier du dossier, y compris ceux inclus. ?>
-            <div class="tabs">
+            <nav class="tabs" aria-label="Fichiers de l'exercice">
+                <ul>
                 <?php foreach ($selectedExercise['files'] as $file) { ?>
-                    <a class="<?php echo $file === $selectedFile ? 'active' : ''; ?>"
-                       href="<?php echo buildUrl(array(
-                           'exercise' => $selectedExercise['folder'],
-                           'page'     => $selectedPage,
-                           'file'     => $file,
-                       )); ?>">
-                        <?php echo escape($file); ?>
-                    </a>
+                    <li>
+                        <?php // "#source" : après le chargement, on reprend directement au code. ?>
+                        <a <?php echo $file === $selectedFile ? 'aria-current="true"' : ''; ?>
+                           href="<?php echo buildUrl(array(
+                               'exercise' => $selectedExercise['folder'],
+                               'page'     => $selectedPage,
+                               'file'     => $file,
+                           )); ?>#source">
+                            <span class="visually-hidden">Code de</span>
+                            <?php echo escape($file); ?>
+                        </a>
+                    </li>
                 <?php } ?>
-            </div>
+                </ul>
+            </nav>
         <?php } ?>
 
-        <div class="column-body source">
+        <?php if ($selectedFile === null) { ?>
 
-            <?php if ($selectedFile === null) { ?>
-
+            <div class="column-body source">
                 <p class="placeholder">Aucun fichier à afficher pour le moment.</p>
+            </div>
 
-            <?php } else { ?>
+        <?php } else { ?>
+
+            <div class="column-body source" id="source" tabindex="0" role="region"
+                 aria-label="Code de <?php echo escape($selectedFile); ?>">
+
 
                 <?php
                 // highlight_file() lit le fichier et renvoie du HTML déjà
@@ -622,10 +749,13 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
                 );
                 ?>
 
-            <?php } ?>
+            </div>
 
-        </div>
-    </div>
+        <?php } ?>
+
+    </section>
+
+    </main>
 
 </div>
 
