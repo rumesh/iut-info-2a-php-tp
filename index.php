@@ -8,9 +8,10 @@
  *   - à droite   : le CODE SOURCE, coloré, des fichiers de cet exercice
  *
  * Aucune liste n'est écrite "en dur" : la page regarde le contenu du dossier
- * dans lequel elle se trouve, repère les dossiers "exercice1", "exercice2"...
- * et construit les liens automatiquement. Dès qu'un nouveau dossier d'exercice
- * est ajouté (ou récupéré depuis GitHub), il apparaît ici tout seul.
+ * dans lequel elle se trouve, repère les dossiers de TP ("TP1", "TP2"...) puis,
+ * dans chacun, les dossiers "exercice1", "exercice2"... et construit les liens
+ * automatiquement. Dès qu'un nouveau dossier d'exercice ou de TP est ajouté
+ * (ou récupéré depuis GitHub), il apparaît ici tout seul.
  *
  * Le code est volontairement découpé en 4 étapes bien visibles :
  *   1. Configuration   : les réglages que l'on peut modifier
@@ -29,19 +30,30 @@
 // du dossier du fichier en cours, quel que soit l'endroit d'où on l'appelle.
 $rootFolder = __DIR__;
 
-// Tous les dossiers d'exercice commencent par ce préfixe, suivi d'un numéro.
+// Les dossiers de TP commencent par ce préfixe, suivi d'un numéro (TP1, TP2...).
+$tpPrefix = 'TP';
+
+// Dans chaque TP, les dossiers d'exercice commencent par ce préfixe, suivi d'un numéro.
 $folderPrefix = 'exercice';
 
 // Fichiers PHP qui ne sont PAS des pages à ouvrir dans le navigateur :
 //  - debut_code_html.php / fin_code_html.php : morceaux de page inclus (require)
-//  - TODOList.php                            : une classe, pas une page
+//  - TODOList.php, Model.php                 : des classes, pas des pages
+//  - functions.php, list_table.php           : des fonctions et un morceau de page (TP2)
 // Ils restent visibles dans la colonne "code source" : on ne cache que le lien
 // qui servirait à les exécuter tout seuls.
 $notRunnableFiles = array(
     'debut_code_html.php',
     'fin_code_html.php',
     'TODOList.php',
+    'Model.php',
+    'functions.php',
+    'list_table.php',
 );
+
+// Page ouverte par défaut quand l'exercice en contient une de ce nom
+// (l'accueil du site des prix Nobel, dans le TP2). Sinon : la première page.
+$defaultPage = 'home.php';
 
 // Couleurs utilisées par highlight_file() pour colorer le code source.
 // PHP utilise par défaut des couleurs prévues pour un fond blanc : on les
@@ -77,26 +89,27 @@ function buildUrl($parameters)
 }
 
 /**
- * Retourne la liste des noms de dossiers d'exercice présents sur le disque,
- * triés dans l'ordre des numéros (exercice2 avant exercice10).
+ * Retourne la liste des sous-dossiers dont le nom est le préfixe suivi d'un
+ * numéro, triés dans l'ordre des numéros (exercice2 avant exercice10).
+ * Sert à trouver les dossiers de TP, puis les exercices de chaque TP.
  *
  * @return array ex. array('exercice1', 'exercice2', 'exercice10')
  */
-function findExerciseFolders($rootFolder, $folderPrefix)
+function findNumberedFolders($parentFolder, $folderPrefix)
 {
     $folders = array();
 
     // scandir() liste TOUT ce que contient le dossier : fichiers ET dossiers.
-    $entries = scandir($rootFolder);
+    $entries = scandir($parentFolder);
 
     foreach ($entries as $entry) {
 
         // On ne garde que les vrais dossiers (on ignore index.php, .git, etc.).
-        if (!is_dir($rootFolder . '/' . $entry)) {
+        if (!is_dir($parentFolder . '/' . $entry)) {
             continue;
         }
 
-        // On ne garde que ceux qui s'appellent "exercice" suivi d'un numéro.
+        // On ne garde que ceux qui s'appellent "exercice" (ou "TP") suivi d'un numéro.
         // Le \d+ du motif signifie "un ou plusieurs chiffres".
         if (!preg_match('/^' . $folderPrefix . '\d+$/', $entry)) {
             continue;
@@ -209,36 +222,45 @@ function readParameter($name)
 
 /* --- 3a. On construit la liste des exercices ------------------------- */
 
-// $exercises est un tableau associatif : la clé est le nom du dossier, et la
-// valeur décrit l'exercice :
-//   'exercice9' => array(
+// $exercises est un tableau associatif : la clé est le chemin du dossier
+// (TP + exercice), et la valeur décrit l'exercice :
+//   'TP1/exercice9' => array(
+//        'tp'     => 'TP1',
 //        'number' => 9,
-//        'folder' => 'exercice9',
+//        'folder' => 'TP1/exercice9',
 //        'files'  => array('debut_code_html.php', 'fin_code_html.php', 'nombre.php'),
 //        'pages'  => array('nombre.php'),
 //   )
 $exercises = array();
 
-foreach (findExerciseFolders($rootFolder, $folderPrefix) as $folderName) {
+$tpFolders = findNumberedFolders($rootFolder, $tpPrefix);
 
-    $sourceFiles = listSourceFiles($rootFolder . '/' . $folderName);
+foreach ($tpFolders as $tpName) {
 
-    $exercises[$folderName] = array(
-        'number' => getExerciseNumber($folderName, $folderPrefix),
-        'folder' => $folderName,
-        'files'  => $sourceFiles,
-        'pages'  => keepRunnableFiles($sourceFiles, $notRunnableFiles),
-    );
+    foreach (findNumberedFolders($rootFolder . '/' . $tpName, $folderPrefix) as $folderName) {
+
+        $folderPath  = $tpName . '/' . $folderName;
+        $sourceFiles = listSourceFiles($rootFolder . '/' . $folderPath);
+
+        $exercises[$folderPath] = array(
+            'tp'     => $tpName,
+            'number' => getExerciseNumber($folderName, $folderPrefix),
+            'folder' => $folderPath,
+            'files'  => $sourceFiles,
+            'pages'  => keepRunnableFiles($sourceFiles, $notRunnableFiles),
+        );
+    }
 }
 
 // count() compte les éléments d'un tableau : utile pour l'affichage du total.
 $exerciseCount = count($exercises);
+$tpCount       = count($tpFolders);
 
 
 /* --- 3b. On lit le choix de l'élève dans l'URL ----------------------- */
 
 // Trois paramètres, tous facultatifs :
-//   exercise = le dossier choisi        (ex. exercice9)
+//   exercise = le dossier choisi        (ex. TP1/exercice9)
 //   page     = la page à exécuter       (ex. nombre.php)
 //   file     = le fichier source à lire (ex. debut_code_html.php)
 $selectedExercise = null;
@@ -253,10 +275,12 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
 
     $selectedExercise = $exercises[$requestedExercise];
 
-    // La page exécutée : celle demandée si elle est valide, sinon la première.
+    // La page exécutée : celle demandée si elle est valide, sinon la page par
+    // défaut si l'exercice en a une, sinon la première.
     $selectedPage = chooseFromList(
         readParameter('page'),
-        $selectedExercise['pages']
+        $selectedExercise['pages'],
+        $defaultPage
     );
 
     // Le source affiché : celui demandé s'il est valide, sinon par défaut
@@ -357,6 +381,14 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
     .exercise a:hover { background: var(--border); }
     .exercise a.active { background: var(--accent); color: #fff; }
     .exercise .empty { font-size: 0.75rem; color: var(--text-muted); font-style: italic; }
+    .tp-title {
+        padding: 0.45rem 1rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--accent);
+        background: var(--code-bg);
+        border-bottom: 1px solid var(--border);
+    }
 
     /* --- Colonne 2 : le résultat --- */
     iframe { width: 100%; height: 100%; border: none; background: #fff; }
@@ -420,7 +452,7 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
     <h1>TP PHP — Sommaire des exercices</h1>
     <span class="subtitle">
         <?php echo $exerciseCount; ?> exercice(s) détecté(s) automatiquement
-        dans ce dossier
+        dans <?php echo $tpCount; ?> TP
     </span>
 </header>
 
@@ -434,13 +466,24 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
             <?php if ($exerciseCount === 0) { ?>
 
                 <p class="placeholder">
-                    Aucun dossier « <?php echo escape($folderPrefix); ?>N »
+                    Aucun dossier « <?php echo escape($tpPrefix); ?>N/<?php echo escape($folderPrefix); ?>N »
                     n'a été trouvé à côté de index.php.
                 </p>
 
             <?php } ?>
 
+            <?php $previousTp = null; ?>
+
             <?php foreach ($exercises as $exercise) { ?>
+
+                <?php
+                // Les exercices sont rangés TP par TP : on affiche le nom du
+                // TP au début de chaque nouveau groupe.
+                if ($exercise['tp'] !== $previousTp) {
+                    $previousTp = $exercise['tp'];
+                    echo '<div class="tp-title">' . escape($exercise['tp']) . '</div>';
+                }
+                ?>
 
                 <div class="exercise">
 

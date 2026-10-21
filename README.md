@@ -9,12 +9,22 @@ directement dans le navigateur.
 
 ---
 
-Ce dépôt contient les corrigés du TP, un dossier par exercice, ainsi que la page
-d'accueil (`index.php`) qui permet de tous les parcourir facilement.
+Ce dépôt contient les corrigés des TP, un dossier par TP et un dossier par
+exercice, ainsi que la page d'accueil (`index.php`) qui permet de tous les
+parcourir facilement.
+
+| TP | Sujet | Ce qu'il faut pour l'exécuter |
+| --- | --- | --- |
+| [TP1](TP1/) | Premières pages PHP, formulaires, sessions, cookies | PHP seul |
+| [TP2](TP2/) | Site des prix Nobel avec une base de données | PHP + PostgreSQL : **voir [TP2/README.md](TP2/README.md)** (installation avec Docker) |
 
 ## Lancer le projet en local
 
 Pour travailler sur sa propre machine plutôt qu'en ligne.
+
+> Les exercices du **TP2** ont besoin d'une base PostgreSQL : pour eux, suivre
+> plutôt [TP2/README.md](TP2/README.md), qui explique comment tout lancer avec
+> Docker sous Windows, macOS et Linux. La méthode ci-dessous suffit pour le TP1.
 
 Une page PHP doit être exécutée par un serveur : il ne suffit pas de
 double-cliquer sur un fichier `.php`, sinon le navigateur affiche le code au lieu
@@ -43,27 +53,33 @@ La page d'accueil est découpée en trois colonnes :
 
 | Colonne | Contenu |
 | --- | --- |
-| **Exercices** (gauche) | La liste des exercices disponibles, avec les pages de chacun |
+| **Exercices** (gauche) | La liste des exercices disponibles, rangés par TP, avec les pages de chacun |
 | **Résultat** (centre) | La page choisie, réellement exécutée par le serveur |
 | **Code source** (droite) | Le code des fichiers de l'exercice, avec la coloration syntaxique |
 
 Dans la colonne de droite, un onglet par fichier : on y retrouve aussi les
 fichiers inclus (`debut_code_html.php`, `fin_code_html.php`) et les classes
-(`TODOList.php`), même s'ils ne s'ouvrent pas directement dans le navigateur.
+(`TODOList.php`, `Model.php`), même s'ils ne s'ouvrent pas directement dans le
+navigateur.
 
 Le lien « ouvrir dans un onglet ↗ » affiche l'exercice seul, en pleine page.
 
 ## Organisation du dépôt
 
 ```
-index.php        la page d'accueil
-exercice1/       un dossier par exercice
-exercice2/
-...
+index.php          la page d'accueil
+TP1/
+  exercice1/       un dossier par exercice
+  exercice2/
+  ...
+TP2/
+  README.md        installation de PHP + PostgreSQL avec Docker
+  exercice1/
+  ...
 ```
 
-La liste n'est écrite nulle part : `index.php` lit le contenu du dossier à chaque
-affichage et construit les liens tout seul. Les exercices sont publiés au fur et
+La liste n'est écrite nulle part : `index.php` lit le contenu des dossiers `TP1`,
+`TP2`… à chaque affichage et construit les liens tout seul. Les exercices sont publiés au fur et
 à mesure de l'avancement du TP : la version en ligne se complète donc toute
 seule, il suffit de recharger la page.
 
@@ -83,3 +99,5 @@ PHP 8 ou plus récent. Pour vérifier qu'il est installé :
 ```bash
 php -v
 ```
+
+Pour le TP2 : Docker (voir [TP2/README.md](TP2/README.md)).
