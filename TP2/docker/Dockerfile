@@ -8,9 +8,25 @@ RUN apt-get update \
     && docker-php-ext-install pdo_pgsql \
     && rm -rf /var/lib/apt/lists/*
 
-# Réglages "développement" : les erreurs PHP s'affichent dans la page,
-# ce qui est bien plus pratique pour corriger son code pendant le TP.
-RUN cp "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
+# Réglages "développement" (par défaut) : les erreurs PHP s'affichent dans la
+# page, ce qui est bien plus pratique pour corriger son code pendant le TP.
+# Sur un serveur public, construire avec PHP_ENV=production : les erreurs sont
+# alors masquées (elles révéleraient chemins, requêtes et accès à la base).
+ARG PHP_ENV=development
+RUN cp "$PHP_INI_DIR/php.ini-$PHP_ENV" "$PHP_INI_DIR/php.ini" \
+    && if [ "$PHP_ENV" = "production" ]; then \
+        printf '%s\n' \
+            'expose_php = Off' \
+            'session.use_strict_mode = 1' \
+            'session.cookie_httponly = 1' \
+            'session.cookie_secure = 1' \
+            'session.cookie_samesite = Lax' \
+            > "$PHP_INI_DIR/conf.d/zz-production.ini"; \
+    fi
+
+# Ne pas annoncer les versions exactes d'Apache et de PHP aux visiteurs.
+RUN printf '%s\n' 'ServerTokens Prod' 'ServerSignature Off' \
+        > /etc/apache2/conf-enabled/zz-hide-version.conf
 
 # Apache ne sert jamais les fichiers cachés (.git, .env...) ni les fichiers
 # de configuration Docker (docker-compose.yml) : ils répondent "404 Not Found".

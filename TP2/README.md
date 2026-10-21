@@ -319,7 +319,8 @@ pas été rouverte depuis. Se déconnecter puis se reconnecter.
 
 **« port is already allocated » / « address already in use »**
 Un autre programme utilise déjà le port 8080 (ou 8081). Dans
-`docker-compose.yml`, remplacer `"8080:80"` par exemple par `"8090:80"`, relancer
+`docker-compose.yml`, remplacer `"127.0.0.1:8080:80"` par exemple par
+`"127.0.0.1:8090:80"`, relancer
 `docker compose up -d`, puis ouvrir <http://localhost:8090>.
 
 **La page affiche « could not find driver »**
