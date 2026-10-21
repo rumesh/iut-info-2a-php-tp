@@ -21,7 +21,16 @@ RUN cp "$PHP_INI_DIR/php.ini-$PHP_ENV" "$PHP_INI_DIR/php.ini" \
             'session.cookie_httponly = 1' \
             'session.cookie_secure = 1' \
             'session.cookie_samesite = Lax' \
+            'session.upload_progress.enabled = Off' \
             > "$PHP_INI_DIR/conf.d/zz-production.ini"; \
+        # Aucun formulaire du site n'envoie de fichier : on refuse toute requête
+        # multipart/form-data avant qu'elle n'atteigne PHP (protection contre
+        # PHP2Shell, CVE-2026-109618 / CVE-2026-109619).
+        printf '%s\n' \
+            "<If \"req('Content-Type') =~ m#multipart/#i\">" \
+            '    Require all denied' \
+            '</If>' \
+            > /etc/apache2/conf-enabled/zz-deny-multipart.conf; \
     fi
 
 # Ne pas annoncer les versions exactes d'Apache et de PHP aux visiteurs.
