@@ -388,7 +388,19 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
         color: var(--accent);
         background: var(--code-bg);
         border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        user-select: none;
+        list-style: none;              /* on remplace le triangle par défaut... */
     }
+    .tp-title::-webkit-details-marker { display: none; }
+    .tp-title::before {                /* ...par une flèche qui tourne */
+        content: "▸";
+        display: inline-block;
+        width: 1em;
+        transition: transform 0.15s;
+    }
+    .tp[open] > .tp-title::before { transform: rotate(90deg); }
+    .tp-title:hover { color: var(--accent-hover); }
 
     /* --- Colonne 2 : le résultat --- */
     iframe { width: 100%; height: 100%; border: none; background: #fff; }
@@ -472,16 +484,24 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
 
             <?php } ?>
 
-            <?php $previousTp = null; ?>
+            <?php foreach ($tpFolders as $tpName) { ?>
+
+                <?php
+                // Chaque TP est un bloc repliable (<details>) : un clic sur son
+                // titre (<summary>) l'ouvre ou le referme, sans JavaScript.
+                // Il est ouvert au départ si aucun exercice n'est choisi, ou
+                // s'il contient l'exercice affiché.
+                $isOpen = $selectedExercise === null || $selectedExercise['tp'] === $tpName;
+                ?>
+                <details class="tp" <?php echo $isOpen ? 'open' : ''; ?>>
+                <summary class="tp-title"><?php echo escape($tpName); ?></summary>
 
             <?php foreach ($exercises as $exercise) { ?>
 
                 <?php
-                // Les exercices sont rangés TP par TP : on affiche le nom du
-                // TP au début de chaque nouveau groupe.
-                if ($exercise['tp'] !== $previousTp) {
-                    $previousTp = $exercise['tp'];
-                    echo '<div class="tp-title">' . escape($exercise['tp']) . '</div>';
+                // On n'affiche ici que les exercices de ce TP.
+                if ($exercise['tp'] !== $tpName) {
+                    continue;
                 }
                 ?>
 
@@ -513,6 +533,10 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
                     <?php } ?>
 
                 </div>
+
+            <?php } ?>
+
+                </details>
 
             <?php } ?>
 
