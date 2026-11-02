@@ -17,14 +17,16 @@ parcourir facilement.
 | --- | --- | --- |
 | [TP1](TP1/) | Premières pages PHP, formulaires, sessions, cookies | PHP seul |
 | [TP2](TP2/) | Site des prix Nobel avec une base de données | PHP + PostgreSQL : **voir [TP2/README.md](TP2/README.md)** (installation avec Docker) |
+| [TP3](TP3/) | Le même site, réorganisé en MVC (modèle, vues, contrôleurs) | PHP + PostgreSQL : **voir [TP3/README.md](TP3/README.md)** |
 
 ## Lancer le projet en local
 
 Pour travailler sur sa propre machine plutôt qu'en ligne.
 
-> Les exercices du **TP2** ont besoin d'une base PostgreSQL : pour eux, suivre
-> plutôt [TP2/README.md](TP2/README.md), qui explique comment tout lancer avec
-> Docker sous Windows, macOS et Linux. La méthode ci-dessous suffit pour le TP1.
+> Les exercices des **TP2 et TP3** ont besoin d'une base PostgreSQL : pour eux,
+> suivre plutôt [TP2/README.md](TP2/README.md) et [TP3/README.md](TP3/README.md),
+> qui expliquent comment tout lancer avec Docker sous Windows, macOS et Linux.
+> La méthode ci-dessous suffit pour le TP1.
 
 Une page PHP doit être exécutée par un serveur : il ne suffit pas de
 double-cliquer sur un fichier `.php`, sinon le navigateur affiche le code au lieu
@@ -60,9 +62,15 @@ La page d'accueil est découpée en trois colonnes :
 Dans la colonne de droite, un onglet par fichier : on y retrouve aussi les
 fichiers inclus (`debut_code_html.php`, `fin_code_html.php`) et les classes
 (`TODOList.php`, `Model.php`), même s'ils ne s'ouvrent pas directement dans le
-navigateur.
+navigateur. Pour le TP3, les onglets montrent aussi les fichiers des
+sous-dossiers : `Controllers/…`, `Models/…`, `Views/…`, `Utils/…`.
 
 Le lien « ouvrir dans un onglet ↗ » affiche l'exercice seul, en pleine page.
+
+La séparation entre le résultat et le code se fait glisser pour élargir l'un ou
+l'autre (au clavier : flèches gauche et droite ; double-clic pour revenir à
+moitié-moitié). En haut à droite, « Résultat seul » ou « Code seul » n'affiche
+qu'un des deux panneaux, en pleine largeur.
 
 ## Organisation du dépôt
 
@@ -76,10 +84,14 @@ TP2/
   README.md        installation de PHP + PostgreSQL avec Docker
   exercice1/
   ...
+TP3/
+  README.md        lancer le TP3 et comprendre l'organisation MVC
+  exercice1/       l'application MVC complète, un dossier par exercice
+  ...
 ```
 
 La liste n'est écrite nulle part : `index.php` lit le contenu des dossiers `TP1`,
-`TP2`… à chaque affichage et construit les liens tout seul. Les exercices sont publiés au fur et
+`TP2`, `TP3`… à chaque affichage et construit les liens tout seul. Les exercices sont publiés au fur et
 à mesure de l'avancement du TP : la version en ligne se complète donc toute
 seule, il suffit de recharger la page.
 
@@ -100,4 +112,4 @@ PHP 8 ou plus récent. Pour vérifier qu'il est installé :
 php -v
 ```
 
-Pour le TP2 : Docker (voir [TP2/README.md](TP2/README.md)).
+Pour les TP2 et TP3 : Docker (voir [TP2/README.md](TP2/README.md)).

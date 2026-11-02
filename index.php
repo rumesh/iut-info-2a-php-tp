@@ -7,6 +7,9 @@
  *   - au centre  : le RÉSULTAT de l'exercice choisi, dans une iframe
  *   - à droite   : le CODE SOURCE, coloré, des fichiers de cet exercice
  *
+ * La séparation entre le résultat et le code se déplace à la souris ou au
+ * clavier, et l'on peut aussi n'afficher que l'un des deux, en pleine largeur.
+ *
  * Aucune liste n'est écrite "en dur" : la page regarde le contenu du dossier
  * dans lequel elle se trouve, repère les dossiers de TP ("TP1", "TP2"...) puis,
  * dans chacun, les dossiers "exercice1", "exercice2"... et construit les liens
@@ -54,6 +57,14 @@ $notRunnableFiles = array(
 // Page ouverte par défaut quand l'exercice en contient une de ce nom
 // (l'accueil du site des prix Nobel, dans le TP2). Sinon : la première page.
 $defaultPage = 'home.php';
+
+// Les panneaux que l'on peut afficher à droite de la liste : le résultat et
+// le code côte à côte (le premier, choisi par défaut), ou l'un des deux seul.
+$views = array(
+    'both'   => 'Résultat + code',
+    'result' => 'Résultat seul',
+    'source' => 'Code seul',
+);
 
 // Couleurs utilisées par highlight_file() pour colorer le code source.
 // PHP utilise par défaut des couleurs prévues pour un fond blanc : on les
@@ -127,10 +138,11 @@ function findNumberedFolders($parentFolder, $folderPrefix)
 }
 
 /**
- * Retourne tous les fichiers PHP d'un dossier : ce sont les fichiers dont on
- * affichera le code source.
+ * Retourne tous les fichiers PHP d'un dossier, puis ceux de ses sous-dossiers
+ * (le TP3 range son code dans Controllers/, Models/, Views/...) : ce sont les
+ * fichiers dont on affichera le code source.
  *
- * @return array ex. array('debut_code_html.php', 'code.php', ...)
+ * @return array ex. array('index.php', 'Controllers/Controller.php', ...)
  */
 function listSourceFiles($folderPath)
 {
@@ -145,7 +157,17 @@ function listSourceFiles($folderPath)
 
     sort($files);
 
-    return $files;
+    // Les fichiers des sous-dossiers, précédés du nom de leur sous-dossier
+    // (ex. "Views/view_home.php"), sont placés après ceux du dossier.
+    $subFolderFiles = array();
+
+    foreach (glob($folderPath . '/*/*.php') as $filePath) {
+        $subFolderFiles[] = basename(dirname($filePath)) . '/' . basename($filePath);
+    }
+
+    sort($subFolderFiles);
+
+    return array_merge($files, $subFolderFiles);
 }
 
 /**
@@ -162,6 +184,12 @@ function keepRunnableFiles($files, $notRunnableFiles)
 
         // in_array() vérifie si le nom fait partie des fichiers non exécutables.
         if (in_array($fileName, $notRunnableFiles)) {
+            continue;
+        }
+
+        // Les fichiers d'un sous-dossier ne s'ouvrent pas seuls : dans le
+        // TP3, une vue ou un contrôleur ne s'affiche qu'à travers index.php.
+        if (strpos($fileName, '/') !== false) {
             continue;
         }
 
@@ -231,6 +259,7 @@ function readParameter($name)
 //        'files'  => array('debut_code_html.php', 'fin_code_html.php', 'nombre.php'),
 //        'pages'  => array('nombre.php'),
 //   )
+// Dans le TP3, 'files' contient aussi les sous-dossiers : 'Views/view_home.php'...
 $exercises = array();
 
 $tpFolders = findNumberedFolders($rootFolder, $tpPrefix);
@@ -259,10 +288,11 @@ $tpCount       = count($tpFolders);
 
 /* --- 3b. On lit le choix de l'élève dans l'URL ----------------------- */
 
-// Trois paramètres, tous facultatifs :
+// Quatre paramètres, tous facultatifs :
 //   exercise = le dossier choisi        (ex. TP1/exercice9)
 //   page     = la page à exécuter       (ex. nombre.php)
 //   file     = le fichier source à lire (ex. debut_code_html.php)
+//   view     = les panneaux affichés    (both, result ou source)
 $selectedExercise = null;
 $selectedPage     = null;
 $selectedFile     = null;
@@ -291,6 +321,20 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
         $selectedPage
     );
 }
+
+// Les panneaux affichés : une clé de $views, sinon les deux (la première).
+$selectedView = chooseFromList(readParameter('view'), array_keys($views));
+$showResult   = $selectedView !== 'source';
+$showSource   = $selectedView !== 'result';
+
+// Ce que l'on regarde en ce moment : les liens qui changent seulement les
+// panneaux affichés le conservent. http_build_query() ignore les valeurs
+// null : ce qui n'a pas encore été choisi n'apparaît pas dans l'adresse.
+$currentChoice = array(
+    'exercise' => $selectedExercise !== null ? $selectedExercise['folder'] : null,
+    'page'     => $selectedPage,
+    'file'     => $selectedFile,
+);
 
 ?>
 <!doctype html>
@@ -386,10 +430,14 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
     }
     main {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        /* Résultat | séparation | code. La largeur du résultat est une variable :
+           le script du bas de page la change quand on déplace la séparation. */
+        grid-template-columns: var(--result-width, 50%) auto 1fr;
         grid-template-rows: minmax(0, 1fr);
         min-width: 0;
     }
+    /* Un seul panneau affiché : il prend toute la largeur. */
+    main.single-panel { grid-template-columns: 1fr; }
     .column {
         display: flex;
         flex-direction: column;
@@ -426,7 +474,8 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
         font-weight: 600;
     }
     .exercise ul,
-    .tabs ul { list-style: none; margin: 0; padding: 0; }
+    .tabs ul,
+    .view-switch ul { list-style: none; margin: 0; padding: 0; }
     .exercise a {
         display: block;
         padding: 0.3rem 0.5rem;
@@ -475,8 +524,10 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
         background: var(--panel);
         border-bottom: 1px solid var(--border);
     }
-    .tabs ul { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-    .tabs a {
+    .tabs ul,
+    .view-switch ul { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+    .tabs a,
+    .view-switch a {
         display: block;
         padding: 0.25rem 0.55rem;
         border-radius: 5px;
@@ -486,8 +537,10 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
         font-family: Consolas, monospace;
         font-size: 0.85rem;
     }
-    .tabs a:hover { color: var(--text); background: var(--border); }
-    .tabs a[aria-current] { background: var(--accent-strong); border-color: var(--accent-strong); color: #fff; }
+    .tabs a:hover,
+    .view-switch a:hover { color: var(--text); background: var(--border); }
+    .tabs a[aria-current],
+    .view-switch a[aria-current] { background: var(--accent-strong); border-color: var(--accent-strong); color: #fff; }
     .source { background: var(--code-bg); padding: 0.75rem 1rem; }
     /* Le code peut défiler : la zone reçoit donc le focus (tabindex="0") pour
        qu'on puisse la faire défiler au clavier, avec les flèches. Le contour
@@ -500,6 +553,27 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
         font-size: 0.875rem;
         line-height: 1.55;
     }
+
+    /* --- Les panneaux : leur choix (dans l'en-tête) et leur séparation --- */
+    /* Mêmes boutons que les onglets du code, mais poussés à droite de
+       l'en-tête et écrits avec la police du texte : ce ne sont pas des fichiers. */
+    .view-switch { margin-left: auto; }
+    .view-switch a { font-family: inherit; }
+    .splitter {
+        width: 6px;
+        background: var(--border);
+        cursor: col-resize;
+        touch-action: none;    /* sur écran tactile, le doigt la déplace au lieu de faire défiler */
+    }
+    .splitter:hover,
+    .splitter:focus-visible,
+    main.resizing .splitter { background: var(--accent); }
+    /* La séparation remplace le trait qui borde la colonne du code. */
+    .splitter + .column { border-left: none; }
+    /* Pendant le déplacement, l'iframe ne doit pas "avaler" la souris : sinon,
+       le mouvement s'arrête dès que le pointeur passe au-dessus du résultat. */
+    main.resizing { cursor: col-resize; user-select: none; }
+    main.resizing iframe { pointer-events: none; }
 
     /* --- Message affiché quand rien n'est sélectionné --- */
     .placeholder {
@@ -522,6 +596,7 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
         .layout, main { grid-template-columns: 1fr; grid-template-rows: none; }
         .layout { flex: none; }
         .column { border-left: none; border-top: 1px solid var(--border); }
+        .splitter { display: none; }   /* les panneaux sont l'un sous l'autre */
         .column-body { max-height: 70vh; }
         iframe { height: 70vh; }
     }
@@ -535,7 +610,9 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
        couleurs et supprime les fonds, on encadre donc le lien actif. */
     @media (forced-colors: active) {
         .exercise a[aria-current],
-        .tabs a[aria-current] { outline: 2px solid Highlight; }
+        .tabs a[aria-current],
+        .view-switch a[aria-current] { outline: 2px solid Highlight; }
+        .splitter { border-inline: 1px solid CanvasText; }
     }
 </style>
 </head>
@@ -560,6 +637,23 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
         <?php echo $exerciseCount; ?> exercice(s) détecté(s) automatiquement
         dans <?php echo $tpCount; ?> TP
     </p>
+
+    <?php
+    // Les panneaux à afficher : les deux côte à côte, ou un seul en pleine
+    // largeur. Chaque lien garde l'exercice, la page et le fichier en cours.
+    ?>
+    <nav class="view-switch" aria-label="Panneaux affichés">
+        <ul>
+        <?php foreach ($views as $view => $label) { ?>
+            <li>
+                <a <?php echo $view === $selectedView ? 'aria-current="true"' : ''; ?>
+                   href="<?php echo buildUrl(array_merge($currentChoice, array('view' => $view))); ?>">
+                    <?php echo escape($label); ?>
+                </a>
+            </li>
+        <?php } ?>
+        </ul>
+    </nav>
 </header>
 
 <div class="layout">
@@ -618,16 +712,18 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
                                 && $selectedExercise['folder'] === $exercise['folder']
                                 && $selectedPage === $page;
 
-                            // Le "#result" à la fin de l'adresse : après le
+                            // Le "#main" à la fin de l'adresse : après le
                             // chargement, la navigation au clavier reprend
-                            // directement au résultat, sans repasser par la liste.
+                            // directement au résultat (ou au code s'il est
+                            // affiché seul), sans repasser par la liste.
                             ?>
                             <li>
                                 <a <?php echo $isActive ? 'aria-current="page"' : ''; ?>
                                    href="<?php echo buildUrl(array(
                                        'exercise' => $exercise['folder'],
                                        'page'     => $page,
-                                   )); ?>#result">
+                                       'view'     => $selectedView,
+                                   )); ?>#main">
                                     <?php
                                     // Plusieurs exercices ont une page "code.php" : le
                                     // texte caché précise laquelle, pour les lecteurs
@@ -653,9 +749,10 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
         </div>
     </nav>
 
-    <main id="main">
+    <main id="main" <?php echo $selectedView !== 'both' ? 'class="single-panel"' : ''; ?>>
 
     <?php /* ---------- Colonne 2 : le résultat dans une iframe ---------- */ ?>
+    <?php if ($showResult) { ?>
     <section class="column" id="result" aria-labelledby="result-title">
         <div class="column-title">
             <h2 id="result-title">Résultat</h2>
@@ -679,7 +776,7 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
 
                 <p class="placeholder">
                     Choisis un exercice dans la colonne de gauche : sa page
-                    s'exécutera ici, et son code source s'affichera à droite.
+                    s'exécutera ici<?php echo $showSource ? ", et son code source s'affichera à droite" : ''; ?>.
                 </p>
 
             <?php } else { ?>
@@ -697,8 +794,24 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
 
         </div>
     </section>
+    <?php } ?>
+
+    <?php if ($selectedView === 'both') { ?>
+        <?php
+        // La séparation entre les deux panneaux : on la fait glisser pour
+        // élargir l'un ou l'autre (voir le script en bas de page). Elle reçoit
+        // le focus (tabindex="0") pour se déplacer aussi au clavier, avec les
+        // flèches, et aria-valuenow dit aux lecteurs d'écran où elle se trouve.
+        ?>
+        <div class="splitter" role="separator" tabindex="0"
+             aria-orientation="vertical" aria-controls="result"
+             aria-label="Largeur du résultat, en pourcentage"
+             aria-valuenow="50" aria-valuemin="15" aria-valuemax="85"
+             title="Glisser pour redimensionner — double-clic : moitié-moitié"></div>
+    <?php } ?>
 
     <?php /* ---------- Colonne 3 : le code source coloré ---------- */ ?>
+    <?php if ($showSource) { ?>
     <section class="column" aria-labelledby="source-title">
         <div class="column-title">
             <h2 id="source-title">Code source</h2>
@@ -719,6 +832,7 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
                                'exercise' => $selectedExercise['folder'],
                                'page'     => $selectedPage,
                                'file'     => $file,
+                               'view'     => $selectedView,
                            )); ?>#source">
                             <span class="visually-hidden">Code de</span>
                             <?php echo escape($file); ?>
@@ -757,6 +871,7 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
         <?php } ?>
 
     </section>
+    <?php } ?>
 
     </main>
 
@@ -773,6 +888,76 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
     if (activeLink) {
         var list = activeLink.closest('.column-body');
         list.scrollTop = activeLink.offsetTop - list.clientHeight / 2;
+    }
+
+    // La séparation entre le résultat et le code (seulement quand les deux
+    // sont affichés) : on la fait glisser à la souris ou au doigt, ou on la
+    // déplace au clavier. Sa position est la largeur du résultat, en %.
+    var splitter = document.querySelector('.splitter');
+
+    if (splitter) {
+        var main = document.getElementById('main');
+
+        // Les limites ne sont écrites qu'une fois, dans le HTML.
+        var minWidth = Number(splitter.getAttribute('aria-valuemin'));
+        var maxWidth = Number(splitter.getAttribute('aria-valuemax'));
+        var resultWidth;
+
+        // Donne au résultat "percent" % de la largeur : le code prend le reste.
+        function setResultWidth(percent) {
+            resultWidth = Math.min(maxWidth, Math.max(minWidth, percent));
+            main.style.setProperty('--result-width', resultWidth + '%');
+            splitter.setAttribute('aria-valuenow', Math.round(resultWidth));
+
+            // Chaque clic recharge la page : on retient donc la largeur dans
+            // le navigateur, pour la retrouver au prochain affichage.
+            // try/catch : le stockage peut être bloqué (navigation privée...).
+            try { localStorage.setItem('resultWidth', resultWidth); } catch (error) {}
+        }
+
+        var savedWidth = NaN;
+        try { savedWidth = parseFloat(localStorage.getItem('resultWidth')); } catch (error) {}
+        setResultWidth(isNaN(savedWidth) ? 50 : savedWidth);
+
+        // Souris ou doigt : setPointerCapture() envoie à la séparation tous
+        // les mouvements du pointeur jusqu'au relâchement, même hors d'elle.
+        splitter.addEventListener('pointerdown', function (event) {
+            splitter.setPointerCapture(event.pointerId);
+            main.classList.add('resizing');
+        });
+        splitter.addEventListener('pointermove', function (event) {
+            if (!main.classList.contains('resizing')) {
+                return;
+            }
+            var box = main.getBoundingClientRect();
+            setResultWidth((event.clientX - box.left) / box.width * 100);
+        });
+        splitter.addEventListener('lostpointercapture', function () {
+            main.classList.remove('resizing');
+        });
+
+        // Double-clic : retour au partage moitié-moitié.
+        splitter.addEventListener('dblclick', function () {
+            setResultWidth(50);
+        });
+
+        // Clavier : les flèches déplacent la séparation, Début et Fin
+        // l'envoient tout au bout.
+        splitter.addEventListener('keydown', function (event) {
+            if (event.key === 'ArrowLeft') {
+                setResultWidth(resultWidth - 5);
+            } else if (event.key === 'ArrowRight') {
+                setResultWidth(resultWidth + 5);
+            } else if (event.key === 'Home') {
+                setResultWidth(minWidth);
+            } else if (event.key === 'End') {
+                setResultWidth(maxWidth);
+            } else {
+                return;
+            }
+            // La touche a servi : la page ne doit pas défiler en plus.
+            event.preventDefault();
+        });
     }
 </script>
 
