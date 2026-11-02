@@ -412,7 +412,10 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
         border-bottom: 1px solid var(--border);
     }
     .column-title h2 { margin: 0; font-size: inherit; font-weight: 600; }
-    .column-body { flex: 1; overflow: auto; }
+    /* position: relative : les textes cachés (.visually-hidden, en position
+       absolue) restent DANS la zone qui défile. Sans cela, ceux du bas de la
+       liste dépassaient de l'écran et faisaient défiler toute la page. */
+    .column-body { flex: 1; overflow: auto; position: relative; }
 
     /* --- Colonne 1 : la liste des exercices --- */
     .exercise { padding: 0.55rem 1rem; border-bottom: 1px solid var(--border); }
@@ -758,6 +761,20 @@ if ($requestedExercise !== null && isset($exercises[$requestedExercise])) {
     </main>
 
 </div>
+
+<script>
+    // Chaque clic recharge la page, et la liste des exercices repart alors tout
+    // en haut : l'élève devrait la refaire défiler pour retrouver où il en est.
+    // On la fait donc défiler jusqu'au lien actif, placé au milieu de la liste.
+    // On change seulement le défilement de la liste (scrollTop) : la page, elle,
+    // ne bouge pas, et le "#result" de l'adresse garde son effet.
+    var activeLink = document.querySelector('.exercise a[aria-current]');
+
+    if (activeLink) {
+        var list = activeLink.closest('.column-body');
+        list.scrollTop = activeLink.offsetTop - list.clientHeight / 2;
+    }
+</script>
 
 </body>
 </html>
