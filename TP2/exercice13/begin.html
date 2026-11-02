@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8"/>
+		<?php // Chaque page définit $title avant d'inclure ce fichier : le titre de l'onglet, annoncé en premier par les lecteurs d'écran, dit sur quelle page on est ?>
+		<title><?php echo isset($title) ? $title . ' — ' : ''; ?>Nobel Prizes</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" href="Content/css/nobel.css"/>
+
+	</head>
+	<body>
+		<a class="skip-link" href="#content">Skip to main content</a>
+
+		<header>
+			<h1><a href="home.php"> Nobel Prizes </a></h1>
+		</header>
+
+		<nav aria-label="Main menu">
+			<ul>
+				<li><a href="last25.php"> Last Nobel Prizes</a></li>
+				<li><a href="list_all.php"> All Nobel Prizes</a></li>
+				<li><a href="form_add.php"> Add a Nobel prize</a></li>
+			</ul>
+		</nav>
+
+		<main id="content">
