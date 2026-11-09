@@ -4,6 +4,7 @@
  *
  * Elle affiche trois zones côte à côte :
  *   - à gauche   : la liste des exercices déjà corrigés, avec les pages disponibles pour chacun
+ *                  (et, en tête de chaque TP, le lien vers son support de présentation)
  *   - au centre  : le RÉSULTAT de l'exercice choisi, dans une iframe
  *   - à droite   : le CODE SOURCE, coloré, des fichiers de cet exercice
  *
@@ -38,6 +39,10 @@ $tpPrefix = 'TP';
 
 // Dans chaque TP, les dossiers d'exercice commencent par ce préfixe, suivi d'un numéro.
 $folderPrefix = 'exercice';
+
+// Dans chaque TP, le support de présentation (un fichier PDF) est rangé dans
+// ce dossier : un lien vers lui s'affiche en tête du TP, dans la liste.
+$presentationFolder = 'presentation';
 
 // Fichiers PHP qui ne sont PAS des pages à ouvrir dans le navigateur :
 //  - debut_code_html.php / fin_code_html.php : morceaux de page inclus (require)
@@ -200,6 +205,25 @@ function keepRunnableFiles($files, $notRunnableFiles)
 }
 
 /**
+ * Retourne le chemin du support de présentation d'un TP : le premier fichier
+ * PDF de son dossier de présentation, ou null s'il n'y en a pas.
+ *
+ * @return string|null ex. 'TP2/presentation/TP2_concepts_cles.pdf'
+ */
+function findPresentation($rootFolder, $tpName, $presentationFolder)
+{
+    // glob() renvoie les fichiers déjà triés par ordre alphabétique,
+    // ou false en cas d'erreur.
+    $pdfFiles = glob($rootFolder . '/' . $tpName . '/' . $presentationFolder . '/*.pdf');
+
+    if ($pdfFiles === false || count($pdfFiles) === 0) {
+        return null;
+    }
+
+    return $tpName . '/' . $presentationFolder . '/' . basename($pdfFiles[0]);
+}
+
+/**
  * Extrait le numéro contenu dans un nom de dossier.
  * "exercice10" devient 10.
  */
@@ -262,9 +286,15 @@ function readParameter($name)
 // Dans le TP3, 'files' contient aussi les sous-dossiers : 'Views/view_home.php'...
 $exercises = array();
 
+// $presentations associe à chaque TP le chemin de son support de présentation,
+// ou null s'il n'en a pas : array('TP1' => null, 'TP2' => 'TP2/presentation/...pdf')
+$presentations = array();
+
 $tpFolders = findNumberedFolders($rootFolder, $tpPrefix);
 
 foreach ($tpFolders as $tpName) {
+
+    $presentations[$tpName] = findPresentation($rootFolder, $tpName, $presentationFolder);
 
     foreach (findNumberedFolders($rootFolder . '/' . $tpName, $folderPrefix) as $folderName) {
 
@@ -512,6 +542,13 @@ $currentChoice = array(
     }
     .tp[open] > .tp-title::before { transform: rotate(90deg); }
     .tp-title:hover { color: var(--accent-hover); }
+    /* Le lien vers le support de présentation, juste sous le titre du TP. */
+    .presentation {
+        margin: 0;
+        padding: 0.45rem 1rem;
+        border-bottom: 1px solid var(--border);
+    }
+    .presentation .open-link { font-size: 0.85rem; }
 
     /* --- Colonne 2 : le résultat --- */
     /* display: block retire le petit espace laissé sous une iframe "en ligne",
@@ -683,6 +720,21 @@ $currentChoice = array(
                 ?>
                 <details class="tp" <?php echo $isOpen ? 'open' : ''; ?>>
                 <summary class="tp-title"><?php echo escape($tpName); ?></summary>
+
+                <?php
+                // Le support de présentation du TP, s'il existe. Comme pour
+                // « ouvrir dans un onglet », on annonce le nouvel onglet aux
+                // lecteurs d'écran ; la flèche, décorative, n'est pas lue.
+                ?>
+                <?php if ($presentations[$tpName] !== null) { ?>
+                    <p class="presentation">
+                        <a class="open-link" target="_blank" rel="noopener"
+                           href="<?php echo escape($presentations[$tpName]); ?>">
+                            Présentation du <?php echo escape($tpName); ?> (PDF)<span class="visually-hidden"> (nouvel onglet)</span>
+                            <span aria-hidden="true">↗</span>
+                        </a>
+                    </p>
+                <?php } ?>
 
             <?php foreach ($exercises as $exercise) { ?>
 
