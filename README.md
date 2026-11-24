@@ -33,7 +33,14 @@ double-cliquer sur un fichier `.php`, sinon le navigateur affiche le code au lie
 de l'exécuter. PHP contient un petit serveur intégré, c'est tout ce dont on a
 besoin ici.
 
-1. Ouvrir un terminal dans le dossier du projet.
+1. Récupérer le projet (une seule fois), puis ouvrir un terminal dans son
+   dossier :
+
+   ```bash
+   git clone https://github.com/rumesh/iut-info-2a-php-tp.git
+   cd iut-info-2a-php-tp
+   ```
+
 2. Lancer le serveur :
 
    ```bash
@@ -113,3 +120,7 @@ php -v
 ```
 
 Pour les TP2 et TP3 : Docker (voir [TP2/README.md](TP2/README.md)).
+
+## Licence
+
+Ce projet est distribué sous licence MIT : voir le fichier [LICENSE](LICENSE).

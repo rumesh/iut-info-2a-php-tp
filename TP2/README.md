@@ -167,7 +167,7 @@ Le script officiel fonctionne sur Ubuntu, Debian, Linux Mint, Fedora…
 1. **Récupérer le projet** (une seule fois) :
 
    ```bash
-   git clone https://github.com/rumesh/iut-info-2-anne-tp1.git
+   git clone https://github.com/rumesh/iut-info-2a-php-tp.git
    ```
 
    S'il est déjà sur la machine, récupérer simplement les nouveautés :
@@ -179,7 +179,7 @@ Le script officiel fonctionne sur Ubuntu, Debian, Linux Mint, Fedora…
 2. **Ouvrir un terminal dans le dossier `TP2`** :
 
    ```bash
-   cd iut-info-2-anne-tp1/TP2
+   cd iut-info-2a-php-tp/TP2
    ```
 
    > Astuce Windows : dans l'Explorateur, ouvrir le dossier `TP2`, puis
