@@ -261,10 +261,18 @@ function chooseFromList($requested, $allowedValues, $fallback = null)
 
 /**
  * Lit un paramètre de l'URL, ou null s'il n'a pas été transmis.
+ *
+ * Un visiteur peut aussi envoyer un tableau ("?exercise[]=x") au lieu d'un
+ * texte : PHP s'arrêterait alors sur une erreur. is_string() l'écarte, comme
+ * un paramètre absent.
  */
 function readParameter($name)
 {
-    return isset($_GET[$name]) ? $_GET[$name] : null;
+    if (!isset($_GET[$name]) || !is_string($_GET[$name])) {
+        return null;
+    }
+
+    return $_GET[$name];
 }
 
 

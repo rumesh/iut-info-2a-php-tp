@@ -31,15 +31,32 @@ RUN cp "$PHP_INI_DIR/php.ini-$PHP_ENV" "$PHP_INI_DIR/php.ini" \
             '    Require all denied' \
             '</If>' \
             > /etc/apache2/conf-enabled/zz-deny-multipart.conf; \
+        # Les pages des exercices ne doivent être ni indexées ni parcourues par
+        # les moteurs de recherche : un robot qui suit les liens
+        # "remove.php?id=..." de la liste supprimerait les prix un par un, et
+        # le texte ajouté par les visiteurs apparaîtrait dans les résultats.
+        a2enmod headers > /dev/null; \
+        printf '%s\n' \
+            '<LocationMatch "^/TP[0-9]+/exercice">' \
+            '    Header always set X-Robots-Tag "noindex, nofollow"' \
+            '</LocationMatch>' \
+            > /etc/apache2/conf-enabled/zz-no-robots.conf; \
+        # Taille maximale d'une requête : 64 Ko, bien plus qu'il n'en faut pour
+        # ajouter ou modifier un prix. Au-delà, Apache répond "413" sans même
+        # appeler PHP : un script ne peut pas remplir la base avec un seul envoi.
+        printf '%s\n' 'LimitRequestBody 65536' \
+            > /etc/apache2/conf-enabled/zz-limit-body.conf; \
     fi
 
 # Ne pas annoncer les versions exactes d'Apache et de PHP aux visiteurs.
 RUN printf '%s\n' 'ServerTokens Prod' 'ServerSignature Off' \
         > /etc/apache2/conf-enabled/zz-hide-version.conf
 
-# Apache ne sert jamais les fichiers cachés (.git, .env...) ni les fichiers
-# de configuration Docker (docker-compose.yml) : ils répondent "404 Not Found".
+# Apache ne sert jamais les fichiers cachés (.git, .env...), les fichiers
+# de configuration Docker (docker-compose.yml) ni les scripts shell : ils
+# répondent "404 Not Found".
 RUN printf '%s\n' \
         'RedirectMatch 404 "/\."' \
         'RedirectMatch 404 "\.ya?ml$"' \
+        'RedirectMatch 404 "\.sh$"' \
         > /etc/apache2/conf-enabled/hide-private-files.conf
